@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shabbat Elevator Cycle Comparison</title>
+<meta name="description" content="Interactive, floor-by-floor comparison of Shabbat-elevator cycle options for multi-storey buildings — with an effort-weighted 'with stairs' model (F^1.3 climbing difficulty) and an urgency-weighted overall score.">
+<meta property="og:title" content="Shabbat Elevator Cycle Comparison">
+<meta property="og:description" content="Which automatic Shabbat-elevator cycle is best for residents? An interactive, floor-by-floor analysis.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='6'%20fill='%232563eb'/%3E%3Crect%20x='9'%20y='7'%20width='14'%20height='18'%20rx='2'%20fill='white'/%3E%3Crect%20x='12'%20y='10'%20width='3'%20height='3'%20fill='%232563eb'/%3E%3Crect%20x='17'%20y='10'%20width='3'%20height='3'%20fill='%232563eb'/%3E%3Crect%20x='12'%20y='15'%20width='3'%20height='3'%20fill='%232563eb'/%3E%3Crect%20x='17'%20y='15'%20width='3'%20height='3'%20fill='%232563eb'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --line:#e5e7eb; --accent:#2563eb; --good:#16a34a; --bad:#dc2626;
+    --hl:rgba(15,23,42,0.065); --conclbg:rgba(37,99,235,0.06);
+    --maxw:1500px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f1115; --panel:#171a21; --ink:#e5e7eb; --muted:#9ca3af; --line:#2a2f3a;
+           --hl:rgba(255,255,255,0.075); --conclbg:rgba(96,165,250,0.13); }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink)}
+  header{padding:16px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .hbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;max-width:var(--maxw);margin:0 auto}
+  header h1{margin:0;font-size:18px}
+  header p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:760px}
+  .pdfbtn{flex:0 0 auto;border:1px solid var(--accent);background:var(--accent);color:#fff;
+          padding:9px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+  .pdfbtn:hover{filter:brightness(1.07)}
+  .wrap{display:flex;gap:18px;align-items:flex-start;padding:18px;max-width:var(--maxw);margin:0 auto}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  #settings{width:300px;flex:0 0 300px;position:sticky;top:18px}
+  #main{flex:1;min-width:0;display:flex;flex-direction:column;gap:18px}
+  .chartgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .printOnly{display:none}
+  .kv{display:inline-block;margin:0 14px 4px 0;font-size:12.5px}
+  .kv b{color:var(--muted);font-weight:600}
+  #tableHost{overflow-x:auto}
+  h2{font-size:14px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0}
+  .row label{flex:1}
+  .row input[type=number]{width:78px;padding:5px 7px;border:1px solid var(--line);border-radius:7px;
+       background:transparent;color:var(--ink);text-align:right}
+  .row input[type=text]{width:78px}
+  select{padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--ink)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .seg button{flex:1;border:0;background:transparent;color:var(--ink);padding:6px 8px;cursor:pointer;font-size:12px}
+  .seg button.on{background:var(--accent);color:#fff}
+  .strat{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+  .swatch{width:12px;height:12px;border-radius:3px;flex:0 0 12px}
+  .hint{color:var(--muted);font-size:12px;margin:10px 0 0}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--muted);font-weight:600}
+  td.best{color:var(--good);font-weight:700}
+  td.worst{color:var(--bad)}
+  tr.hl td{background:var(--hl)}
+  tr.hl td:first-child{font-weight:600}
+  .scoreboard{display:flex;flex-direction:column;gap:6px;margin:4px 0 2px}
+  .scorerow{display:grid;grid-template-columns:14px minmax(150px,240px) 1fr 56px;align-items:center;gap:10px;font-size:13px}
+  .scorerow .sname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sbarwrap{background:var(--line);border-radius:4px;height:10px;overflow:hidden}
+  .sbar{display:block;height:100%;border-radius:4px}
+  .sval{text-align:right;font-variant-numeric:tabular-nums}
+  .chartnote{font-size:11.5px;color:var(--muted);margin:6px 2px 0;font-style:italic}
+  .chartnote a{color:var(--accent)}
+  .refs{max-width:820px}
+  .refs h3{font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0;margin:14px 0 6px;font-weight:600}
+  .refs p{font-size:13px;line-height:1.6;margin:6px 0}
+  .refs a{color:var(--accent)}
+  .reftable{border-collapse:collapse;font-size:12.5px;margin:8px 0}
+  .reftable th,.reftable td{border:1px solid var(--line);padding:3px 10px;text-align:right}
+  .reftable th:first-child,.reftable td:first-child{text-align:left}
+  .refs-list{font-size:12.5px;line-height:1.7;padding-left:20px;margin:6px 0}
+  #summaryPanel p{max-width:900px;font-size:13.5px;line-height:1.65}
+  #summaryPanel .cap{font-size:12.5px}
+  #summaryPanel p.concl{background:var(--conclbg);border-left:3px solid var(--accent);border-radius:6px;padding:10px 14px}
+  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .controls .ctl{display:flex;gap:6px;align-items:center;font-size:13px}
+  .chart svg{width:100%;height:auto;display:block}
+  .cap{color:var(--muted);font-size:12px;margin-top:6px}
+  h3{font-size:12px;margin:0 0 10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+  h4{font-size:12.5px;margin:0 0 6px;color:var(--ink);font-weight:600}
+  .resultset > h2{font-size:15px;color:var(--ink);text-transform:none;letter-spacing:0;
+       border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:14px}
+  .tablebox{margin-bottom:14px}
+  .legendhead{font-size:13px;font-weight:600;margin-bottom:10px}
+  .legendhead span{font-weight:400;color:var(--muted);font-size:12px}
+  .legendbar{display:flex;flex-wrap:wrap;gap:8px}
+  .legitem{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:13px}
+  .legitem .lname{font-weight:500}
+  .legitem .anchorpick{display:flex;align-items:center;gap:3px;color:var(--muted);font-size:12px;margin-left:2px;cursor:pointer}
+  .legitem.off{opacity:.5}
+  .legitem.isanchor{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .statgrid{display:grid;grid-template-columns:1fr auto auto;gap:4px 14px;font-size:12.5px;margin-top:8px}
+  .statgrid .h{color:var(--muted)}
+  details{margin-top:10px}
+  summary{cursor:pointer;color:var(--muted);font-size:12px}
+  fieldset{border:1px solid var(--line);border-radius:9px;margin:0 0 4px;padding:10px 12px}
+  fieldset legend{color:var(--muted);font-size:11px;padding:0 4px;text-transform:uppercase;letter-spacing:.04em}
+  .disabled{opacity:.45;pointer-events:none}
+
+  /* --- Wide comparison charts collapse before phone width --- */
+  @media (max-width:1180px){ .chartgrid{grid-template-columns:1fr} }
+
+  /* --- Phone: single column, sections stacked, settings on top --- */
+  @media (max-width:760px){
+    .hbar{flex-direction:column}
+    .pdfbtn{width:100%}
+    .wrap{flex-direction:column;padding:12px;gap:14px}
+    #settings{position:static;width:100%;flex:none}
+    #main{width:100%}
+  }
+
+  /* --- A4 landscape print / Save-as-PDF: the full wide view --- */
+  @media print{
+    @page{ size:A4 landscape; margin:8mm; }
+    :root{ --bg:#fff; --panel:#fff; --ink:#111; --muted:#444; --line:#cdd2da; }
+    html,body{ background:#fff; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    header{ padding:0 0 6px; border-bottom:1px solid var(--line); }
+    header p, #printBtn, .controls, #settings, details{ display:none !important; }
+    h1{ font-size:15px; }
+    h2{ font-size:11px; margin-bottom:6px; }
+    .wrap{ display:block; padding:0; max-width:none; }
+    #main{ display:block; }
+    .panel{ border:1px solid var(--line); border-radius:6px; padding:9px 11px; margin-bottom:8px; break-inside:avoid; }
+    .chartgrid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .printOnly{ display:block; }
+    table{ font-size:10px; }
+    th,td{ padding:4px 6px; }
+    .cap{ font-size:9px; }
+    .kv{ font-size:10px; margin-right:12px; }
+    #controlsPanel{ display:none !important; }
+    .resultset{ break-inside:auto; }
+    .resultset > h2{ font-size:13px; }
+    .tablebox, .chartbox{ break-inside:avoid; }
+    #ambResult, #nonResult, #timelineSection, #refsSection{ break-before:page; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="hbar">
+    <div>
+      <h1>Shabbat Elevator Cycle Comparison</h1>
+      <p>Compare how long residents wait + ride under different automatic Shabbat-elevator cycles. All times in <b>m:ss</b>. Hover bars/cells for exact seconds. On a phone, use the button to generate the wide A4-landscape view as a PDF.</p>
+    </div>
+    <button id="printBtn" class="pdfbtn">⤓ Save wide view as PDF<br><small style="font-weight:400;opacity:.85">A4 landscape</small></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ========================== SETTINGS ========================== -->
+  <aside id="settings" class="panel">
+    <h2>Building</h2>
+    <div class="row"><label>Number of floors</label><input type="number" id="floors" value="14" min="3" max="60"></div>
+    <div class="row"><label>Floor 1 is&hellip;</label>
+      <div class="seg" id="floor1mode">
+        <button data-v="lobby">the Lobby</button>
+        <button data-v="above" class="on">above Lobby</button>
+      </div>
+    </div>
+
+    <h2 style="margin-top:18px">Timing (seconds)</h2>
+    <div class="row"><label>Dwell at each floor</label><input type="number" id="midDwell" value="30" min="0"></div>
+    <div class="row"><label>Dwell at lobby</label><input type="number" id="lobbyDwell" value="70" min="0"></div>
+    <div class="row"><label>Dwell at top floor</label><input type="number" id="topDwell" value="45" min="0"></div>
+    <div class="row"><label title="Time to move one floor when the elevator stops at both ends — includes accelerating from a stop and decelerating to one. Used for each single-floor hop.">Travel: 1-floor hop (w/ stop)</label><input type="number" id="localStep" value="6" min="1" step="0.1" title="Time to move one floor when the elevator stops at both ends — includes accelerate + decelerate. Used for each single-floor hop."></div>
+    <div class="row"><label title="Extra time per additional floor while already cruising (no extra accel/decel). A nonstop run of N floors = the 1-floor hop + (N−1) × this.">Travel: each added floor</label><input type="number" id="expressStep" value="1.85" min="0.1" step="0.05" title="Extra time per additional floor while already cruising (no extra accel/decel). A nonstop run of N floors = the 1-floor hop + (N−1) × this."></div>
+    <p class="hint">A nonstop run of N floors takes <i>hop + (N−1)×added</i>. So lobby↔top express ≈ <span id="expressNote"></span>.</p>
+
+    <h2 style="margin-top:18px">Stairs as a fallback</h2>
+    <div class="row"><label>Climb difficulty model</label>
+      <div class="seg" id="climbModel">
+        <button data-v="power" class="on">Power</button>
+        <button data-v="exp">Exp.</button>
+      </div>
+    </div>
+    <fieldset id="walkset">
+      <legend>Climbing effort — up</legend>
+      <div class="row"><label title="Seconds-equivalent effort of climbing one flight.">1-flight effort (sec)</label><input type="number" id="climbC" value="60" min="1" step="1"></div>
+      <div class="row"><label id="climbShapeLabel" title="Power model: effort = (1-flight)·F^exponent. ~1.3 matches the published Borg-exertion curve.">Difficulty exponent</label><input type="number" id="climbShape" value="1.3" min="0.01" step="0.05"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Descending effort — down</legend>
+      <div class="row"><label title="Seconds-equivalent effort per flight descending — linear and cheap.">Per-flight effort (sec)</label><input type="number" id="descentC" value="8" min="0" step="1"></div>
+    </fieldset>
+    <p class="hint">The “with stairs” set takes whichever is easier — wait or walk. Climbing to the top ≈ <span id="climbNote"></span>, so upper floors are effectively elevator-bound.</p>
+
+    <h2 style="margin-top:18px">Urgency</h2>
+    <div class="row"><label title="The value of a minute saved going up (getting home) versus a minute going down (leaving). Drives the Overall section.">Ascent value (vs descent)</label>
+      <span style="display:flex;align-items:center;gap:8px">
+        <input type="range" id="urgency" min="0.5" max="5" step="0.5" value="3" style="width:84px">
+        <span id="urgencyOut" style="min-width:30px;text-align:right">3:1</span>
+      </span>
+    </div>
+    <p class="hint">Higher = getting home fast matters more than a quick exit. Blends the two directions into the <b>Overall</b> section below.</p>
+
+    <details>
+      <summary>How times are defined &amp; assumptions</summary>
+      <p class="hint">Every trip is measured on the elevator's cycle clock, starting when the lobby doors open. <b>Lobby→Floor</b> = from the lobby doors opening (you board) until the doors open at your floor — the initial lobby dwell is included. <b>Floor→Lobby</b> = from the doors opening at your floor (you board) until the doors next open at the lobby. For each floor these two legs add up to exactly one full cycle, so no single elevator trip exceeds the cycle. Express legs make no intermediate stops; the elevator always pauses at the lobby and top. The “with stairs” view replaces the raw ride time with the <b>effective time</b> — the lesser of waiting for the elevator or taking the stairs — where stair effort grows as F<sup>1.3</sup> going up and is cheap going down (see Notes &amp; references).</p>
+    </details>
+  </aside>
+
+  <!-- ========================== MAIN ========================== -->
+  <main id="main">
+    <section class="panel printOnly" id="printSummaryPanel">
+      <h2>Settings &amp; scenario</h2>
+      <div id="printSummary"></div>
+    </section>
+
+    <section class="panel" id="summaryPanel">
+      <h2>Summary</h2>
+      <p><b>Objective.</b> Compare the automatic cycles a Shabbat elevator can run in a multi-storey building and ask which is beneficial for most people.</p>
+      <p class="concl"><b>Conclusion.</b> Under the default, reasonable assumptions, an <i>express ascent</i> (express up, stop every floor down) is the most beneficial cycle: it speeds travel for most residents, especially under the conditions where speed matters most — getting home quickly to attend to an urgent need. Its slower descent falls on the easier trip: leaving is rarely time-pressured (you go when you're ready), and many residents can comfortably walk down a few flights instead. The margin of benefit widens the more one values a quick return home. The mirror-image “stop every floor up” cycle is worst, and odd/even schemes are middling but <i>unfair by parity</i> — half the floors get a fast ascent and half the long round-the-top detour.</p>
+      <p><b>Method.</b> The elevator schedule is reconstructed from a real building's measured timings — about 30&nbsp;s for the nonstop express from lobby to top, about 6&nbsp;s per floor when it stops at each, and 70&nbsp;/&nbsp;45&nbsp;/&nbsp;30&nbsp;s dwells at the lobby, top and each intermediate floor (a full cycle of ≈&nbsp;10:19) — and from it we compute, for five representative floors, how long it takes to ride home (lobby→floor) and to leave home (floor→lobby) under each cycle. Two layers turn raw times into the challenges experienced. The <b>empirical</b> layer recognises that stairs are a real alternative only for some, depending on the number of flights: following published Borg rating-of-perceived-exertion data, the effort of climbing <i>F</i> flights is modelled as ∝&nbsp;<i>F</i><sup>1.3</sup>, and a resident's effective time is the <i>lesser of waiting or walking</i> — so low floors are largely insulated from a poor cycle, while upper floors, for whom climbing is effectively impossible, absorb a slow ascent in full; descending demands less exertion and is therefore escapable for nearly everyone. The <b>subjective</b> layer adds an urgency asymmetry: a slow ascent to get back home strands you in a lobby or elevator when you can't wait to get to a bathroom or to rest, while a slow descent to exit is experienced only when one is ready to leave — so a minute saved going up is weighted more than a minute going down (default 3:1, adjustable). <b>Sources.</b> Travel and dwell times are measured on the building; the climbing-difficulty exponent and the urgency rationale are documented with citations in the <a href="#refsSection">Notes&nbsp;&amp;&nbsp;references</a> at the foot of the page.</p>
+      <p><b>How to use this tool.</b> Below, choose an <b>anchor</b> scenario (the ◉ radio) as your baseline and tick the other cycles to compare against it. Adjust any parameter in the left-hand panel — building, timing, stair-effort and urgency — and every table and chart updates instantly. The comparison results appear further down the page.</p>
+      <p class="cap"><b>The illustrations below</b> work from the conclusion outward: a scoreboard ranking the cycles by overall time cost; the urgency-weighted overall time cost floor-by-floor; then the “with stairs” and “no stairs” breakdowns (each showing Floor→Lobby and Lobby→Floor, as totals and as differences from a chosen anchor cycle); and finally the raw cycle timeline. Throughout, each cycle keeps a fixed colour, the middle floor is shaded as a visual anchor, and in the difference charts a bar above the line is worse than the anchor and below is better.</p>
+    </section>
+
+    <section class="panel" id="controlsPanel">
+      <div class="legendhead">Cycles to compare <span>— check to show · select ◉ to set the difference anchor</span></div>
+      <div class="legendbar" id="stratList"></div>
+      <p class="cap" style="margin-top:12px">The <b>“overall”</b> ranking leads (cycles blended by ascent-urgency, with a per-cycle scoreboard), then the <b>“with stairs”</b> (effective time = the lesser of waiting or climbing, climb effort ∝ F<sup>exp</sup>) and <b>“no stairs”</b> (elevator only) breakdowns. Breakdowns show <b>Floor→Lobby then Lobby→Floor</b> as tables (totals + differences vs the anchor) then graphs. The middle floor (<b id="midNote"></b>) is shaded as a visual anchor. Hover for exact seconds.</p>
+    </section>
+
+    <section class="panel resultset" id="overallResult">
+      <h2 id="overallHeading">Overall — urgency-weighted</h2>
+      <div id="overallBody"></div>
+    </section>
+
+    <section class="panel resultset" id="ambResult">
+      <h2 id="ambHeading">Walk stairs</h2>
+      <div id="ambBody"></div>
+    </section>
+
+    <section class="panel resultset" id="nonResult">
+      <h2>No stairs <span style="font-weight:400;color:var(--muted);font-size:13px">— elevator only (e.g. non-ambulatory)</span></h2>
+      <div id="nonBody"></div>
+    </section>
+
+    <section class="panel" id="timelineSection">
+      <h2>Cycle timeline</h2>
+      <div class="controls">
+        <div class="ctl">Show cycle:
+          <select id="vizStrat"></select>
+        </div>
+        <div class="ctl" id="cyclePeriod" style="color:var(--muted)"></div>
+      </div>
+      <div class="chart" id="timeline"></div>
+      <p class="cap">Elevator position over one full cycle. Flat segments = doors open (dwell); diagonals = travel.</p>
+    </section>
+
+    <section class="panel" id="refsSection">
+      <h2>Notes &amp; references</h2>
+      <div class="refs">
+        <h3>A. The climbing-difficulty model (F<sup>1.3</sup>)</h3>
+        <p>The “with stairs” effective-time model treats climbing as disproportionately costly: the effort of climbing <i>F</i> flights is modelled as <b>D = c · F<sup>1.3</sup></b> (a power law; an exponential <i>c · e<sup>0.25·(F−1)</sup></i> is also selectable). Descending is treated as cheap and roughly linear. This note documents the basis.</p>
+
+        <h3>1. Why not linear</h3>
+        <p>The mechanical work of a climb is almost perfectly linear in height — for a 75&nbsp;kg person each floor (~3&nbsp;m) is <i>mgh</i> ≈ 2.2&nbsp;kJ, so 14 floors ≈ 31&nbsp;kJ. But <b>perceived</b> difficulty rises faster than linear, because fatigue accumulates: glycogen use, ventilation, muscle-metabolite build-up and shrinking cardiovascular reserve all compound as the climb continues. The effect is sharper after age 60, when maximal aerobic capacity has fallen 20–40% versus younger adults.</p>
+
+        <h3>2. Perceived exertion (Borg RPE)</h3>
+        <p>On the Borg 6–20 rating-of-perceived-exertion scale, a typical healthy older adult reports roughly:</p>
+        <table class="reftable"><thead><tr><th>Flights</th><th>Approx. Borg RPE</th></tr></thead><tbody>
+          <tr><td>1</td><td>8–9 (very light)</td></tr>
+          <tr><td>2</td><td>9–10</td></tr>
+          <tr><td>3</td><td>10–11</td></tr>
+          <tr><td>5</td><td>11–13</td></tr>
+          <tr><td>7</td><td>13–14</td></tr>
+          <tr><td>10</td><td>15–16</td></tr>
+          <tr><td>14</td><td>17–19</td></tr>
+        </tbody></table>
+        <p>Each added flight does not add equal exertion — 1→2 barely changes, while 12→13 can feel dramatically harder.</p>
+
+        <h3>3. The model used here</h3>
+        <p>A power function <b>D = F<sup>1.3</sup></b> (normalised so one flight = 1) captures this shape. Relative perceived difficulty:</p>
+        <table class="reftable"><thead><tr><th>Flights</th><th>Relative difficulty (F<sup>1.3</sup>)</th></tr></thead><tbody>
+          <tr><td>1</td><td>1.0</td></tr>
+          <tr><td>2</td><td>2.5</td></tr>
+          <tr><td>4</td><td>6.1</td></tr>
+          <tr><td>6</td><td>10.3</td></tr>
+          <tr><td>8</td><td>15.0</td></tr>
+          <tr><td>10</td><td>20.0</td></tr>
+          <tr><td>12</td><td>25.4</td></tr>
+          <tr><td>14</td><td>31.0</td></tr>
+        </tbody></table>
+        <p>So flight 14 feels roughly <b>31×</b> as hard as flight 1 — not because any single flight is harder, but because accumulated fatigue is far greater. An exponential alternative <i>D = e<sup>0.25·(F−1)</sup></i> (≈ 25× at 14 flights) fits the subjective “the first few are easy, then it gets much harder” description equally well.</p>
+
+        <h3>Caveat</h3>
+        <p>No published paper establishes this exact equation for stair climbing in adults aged 60–70. The exponent (≈ 1.2–1.4) is consistent with fatigue relationships seen in prolonged exercise and with the non-linear Borg-RPE increases documented in the literature. For modelling the <i>choice</i> of elevator vs. stairs from observed behaviour (rather than the difficulty of the climb itself), a logistic regression of stair use would be more appropriate than perceived exertion alone.</p>
+
+        <h3>References</h3>
+        <ol class="refs-list">
+          <li>Evaluation of stair climbing in elderly people. <a href="https://pubmed.ncbi.nlm.nih.gov/25335569/" target="_blank" rel="noopener">PubMed 25335569</a></li>
+          <li>Associations between Borg's rating of perceived exertion and physiological measures. <a href="https://pubmed.ncbi.nlm.nih.gov/22615009/" target="_blank" rel="noopener">PubMed 22615009</a></li>
+          <li>Relationships between perceived limitations in stair climbing and lower-limb strength, BMI, and self-reported stair-climbing activity. <a href="https://www.researchgate.net/publication/232206913" target="_blank" rel="noopener">ResearchGate 232206913</a></li>
+          <li>Stair climbing at home for health benefits (PhD thesis, University of Birmingham). <a href="https://etheses.bham.ac.uk/8550/1/Michael18PhD.pdf" target="_blank" rel="noopener">etheses.bham.ac.uk</a></li>
+        </ol>
+
+        <h3>B. Ascent vs descent — the urgency weighting</h3>
+        <p>The “Overall” view weights a minute saved going <b>up</b> more heavily than a minute saved going <b>down</b>. The reasoning is subjective but consistent: a slow ascent and a slow descent are not equally costly.</p>
+        <p>Consider an ordinary, non-emergency personal need — say, needing a bathroom:</p>
+        <ul class="refs-list">
+          <li><b>Returning home</b> (lobby → your floor): the wait is spent outside your apartment with no relief available, and on a high floor the stairs are not a realistic option — so getting up quickly is genuinely valuable.</li>
+          <li><b>Leaving</b> (your floor → lobby): you can simply catch a later elevator and wait in the comfort of your own home — your couch, your own bathroom — until it comes. The delay is an inconvenience you control, not a predicament.</li>
+        </ul>
+        <p>So the disutility of waiting is asymmetric — high going up (you're stranded outside), low going down (you're already home). The asymmetry is sharpest for <b>upper floors</b>, where the stair fallback is unavailable; for low floors the whole trade-off is milder because the stairs are viable either way.</p>
+        <p>The <b>ascent-urgency</b> slider sets how strongly to apply this (default: a minute up is worth about three minutes down). It is a stated preference, not a measurement — set it to 1:1 to value both directions equally. A genuine <i>medical</i> emergency is out of scope: in that case one should use the regular, non-Shabbat elevator.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+/* ---------------- Strategy catalogue ---------------- */
+const PALETTE = ['#2563eb','#ea580c','#7c3aed','#db2777','#0891b2','#ca8a04'];
+const STRATS = [
+  {id:'expUp_stopDown',     name:'Express ↑, stop-every ↓'},
+  {id:'stopUp_expDown',     name:'Stop-every ↑, express ↓'},
+  {id:'upEven_downOdd',     name:'Up evens, down odds'},
+  {id:'upOdd_downEven',     name:'Up odds, down evens'},
+  {id:'expUp_stopDown_mid', name:'Express ↑ (mid stop), stop-every ↓'},
+  {id:'stopUp_expDown_mid', name:'Stop-every ↑, express ↓ (mid stop)'},
+];
+STRATS.forEach((s,i)=> s.color = PALETTE[i%PALETTE.length]);
+const DEFAULT_ON = new Set(['expUp_stopDown','stopUp_expDown','upEven_downOdd']);
+
+/* ---------------- State ---------------- */
+const state = {
+  floors:14, floor1:'above',
+  midDwell:30, lobbyDwell:70, topDwell:45,
+  localStep:6, expressStep:1.85,
+  climbModel:'power', climbShape:1.3, climbC:60, descentC:8, urgency:3,
+  enabled:new Set(DEFAULT_ON),
+  anchor:'expUp_stopDown', viz:'expUp_stopDown',
+};
+
+/* position model: 0 = lobby (ground). M = top floor position. */
+function topPos(){ return state.floor1==='lobby' ? state.floors-1 : state.floors; }
+function floorLabel(pos){
+  if(pos===0) return state.floor1==='lobby' ? 'Lobby (Fl 1)' : 'Lobby (G)';
+  const fl = state.floor1==='lobby' ? pos+1 : pos;
+  return 'Fl '+fl;
+}
+function shortLabel(pos){
+  if(pos===0) return 'Lobby';
+  return 'Fl '+(state.floor1==='lobby' ? pos+1 : pos);
+}
+
+/* 5 representative floors: 2 above lobby, top, 3 evenly spaced between */
+function repPositions(){
+  const M = topPos();
+  const lo = Math.min(2, M);
+  const out = [];
+  for(let k=0;k<5;k++) out.push(Math.round(lo + k*(M-lo)/4));
+  return [...new Set(out)].filter(p=>p>=1 && p<=M).sort((a,b)=>a-b);
+}
+
+/* which reps[] index is the "middle floor" (highlighted as a visual anchor).
+   reps[0] is the lobby; floors are reps[1..]. */
+function midRepIndex(reps){
+  if(reps.length<1) return -1;
+  return Math.floor((reps.length-1)/2);
+}
+
+/* ---------------- Build a cycle's stop list ---------------- */
+function buildStops(strat){
+  const M = topPos();
+  const L=state.lobbyDwell, Top=state.topDwell, Mid=state.midDwell;
+  const mid = Math.round(M/2);
+  const stops=[{pos:0,dwell:L}];
+  switch(strat){
+    case 'expUp_stopDown':
+      stops.push({pos:M,dwell:Top});
+      for(let p=M-1;p>=1;p--) stops.push({pos:p,dwell:Mid});
+      break;
+    case 'expUp_stopDown_mid':
+      if(mid>0&&mid<M) stops.push({pos:mid,dwell:Mid});
+      stops.push({pos:M,dwell:Top});
+      for(let p=M-1;p>=1;p--) stops.push({pos:p,dwell:Mid});
+      break;
+    case 'stopUp_expDown':
+      for(let p=1;p<=M-1;p++) stops.push({pos:p,dwell:Mid});
+      stops.push({pos:M,dwell:Top});
+      break;
+    case 'stopUp_expDown_mid':
+      for(let p=1;p<=M-1;p++) stops.push({pos:p,dwell:Mid});
+      stops.push({pos:M,dwell:Top});
+      if(mid>0&&mid<M) stops.push({pos:mid,dwell:Mid});
+      break;
+    case 'upEven_downOdd':
+      for(let p=2;p<=M-1;p+=2) stops.push({pos:p,dwell:Mid});
+      stops.push({pos:M,dwell:Top});
+      for(let p=M-1;p>=1;p--) if(p%2===1) stops.push({pos:p,dwell:Mid});
+      break;
+    case 'upOdd_downEven':
+      for(let p=1;p<=M-1;p+=2) stops.push({pos:p,dwell:Mid});
+      stops.push({pos:M,dwell:Top});
+      for(let p=M-1;p>=1;p--) if(p%2===0) stops.push({pos:p,dwell:Mid});
+      break;
+  }
+  return stops;
+}
+
+/* timeline of door-open events over one cycle; t=0 = lobby doors open */
+/* travel time for a move spanning |d| floors between two consecutive stops:
+   the first floor (with its accel/decel + stop) costs localStep; each additional
+   floor while already cruising costs expressStep. A 1-floor hop = localStep;
+   a long nonstop run averages toward expressStep per floor. */
+function moveTime(d){ d=Math.abs(d); if(d===0) return 0; return state.localStep + (d-1)*state.expressStep; }
+
+function buildTimeline(stops){
+  let t=0; const ev=[];
+  for(let i=0;i<stops.length;i++){
+    const s=stops[i];
+    ev.push({pos:s.pos,tOpen:t,tClose:t+s.dwell});
+    const next=stops[(i+1)%stops.length];
+    t = t + s.dwell + moveTime(next.pos - s.pos);
+  }
+  return {ev, T:t};
+}
+
+/* expand over K cycles + index by position */
+function compiled(strat){
+  const stops=buildStops(strat);
+  const {ev,T}=buildTimeline(stops);
+  return {ev,T,stops};
+}
+
+/* earliest / latest time the doors open at a position within one cycle */
+function earliestOpen(ev,pos){ let m=Infinity; for(const e of ev) if(e.pos===pos && e.tOpen<m) m=e.tOpen; return m===Infinity?null:m; }
+function latestOpen(ev,pos){ let m=-Infinity; for(const e of ev) if(e.pos===pos && e.tOpen>m) m=e.tOpen; return m===-Infinity?null:m; }
+
+/* Pure-elevator leg times (clock = the cycle, t=0 when the lobby doors open).
+   lobby -> floor F = doors open at F ; floor F -> lobby = from F's stop to the cycle end. */
+function elevUp(C,F){ const r=earliestOpen(C.ev,F); return r==null?Infinity:r; }
+function elevDown(C,F){ const lo=latestOpen(C.ev,F); return lo==null?Infinity:(C.T-lo); }
+
+/* Perceived stair effort (seconds-equivalent) for walking F flights.
+   Climbing grows fast — power F^exp (≈F^1.3) or exponential — so by the upper
+   floors it is effectively impossible; descending is cheap and linear. */
+function climbEffort(F){
+  return state.climbModel==='exp'
+    ? state.climbC*Math.exp(state.climbShape*(F-1))
+    : state.climbC*Math.pow(F, state.climbShape);
+}
+function descentEffort(F){ return state.descentC*F; }
+
+/* compute leg times for one resident model.
+   'elevator' = captive / no-stairs baseline (pure elevator).
+   'burden'   = effective burden = best of (wait, walk), the walk bounded by stair
+                effort — so high floors cannot escape a slow ascent. */
+function computeAll(mode){
+  const reps=repPositions();   // the representative floors (no lobby/full-cycle row)
+  const result={reps, byStrat:{}};
+  for(const s of STRATS){
+    if(!state.enabled.has(s.id)) continue;
+    const C=compiled(s.id);
+    const rows=reps.map(F=>{
+      const eu=elevUp(C,F), ed=elevDown(C,F);
+      if(mode==='elevator') return {pos:F, down:ed, up:eu};
+      return {pos:F, down:Math.min(ed, descentEffort(F)), up:Math.min(eu, climbEffort(F))};
+    });
+    result.byStrat[s.id]={T:C.T, stops:C.stops.length, rows, C};
+  }
+  return result;
+}
+
+/* ---------------- Formatting ---------------- */
+function mmss(s){
+  if(!isFinite(s)) return '—';
+  s=Math.round(s); const m=Math.floor(s/60), r=s%60;
+  return m+':'+String(r).padStart(2,'0');
+}
+
+/* ---------------- Rendering: table ---------------- */
+/* total table for one metric ('down' or 'up') */
+function tableHTML(data, metric){
+  const active=STRATS.filter(s=>state.enabled.has(s.id));
+  let h='<table><thead><tr><th>Floor</th>';
+  for(const s of active) h+=`<th><span class="swatch" style="background:${s.color};display:inline-block;margin-right:5px"></span>${s.name}</th>`;
+  h+='</tr></thead><tbody>';
+  const hl=midRepIndex(data.reps);
+  data.reps.forEach((pos,ri)=>{
+    const flabel = floorLabel(pos);
+    h+=`<tr class="${ri===hl?'hl':''}"><td>${flabel}</td>`;
+    const vals=active.map(s=>data.byStrat[s.id].rows[ri][metric]);
+    const min=Math.min(...vals), max=Math.max(...vals);
+    active.forEach((s,ci)=>{
+      const v=vals[ci];
+      const cls = (max===min) ? '' : (v===min?'best':(v===max?'worst':''));
+      h+=`<td class="${cls}" title="${Math.round(v)} s">${mmss(v)}</td>`;
+    });
+    h+='</tr>';
+  });
+  return h+'</tbody></table>';
+}
+
+/* difference table vs the anchor for one metric */
+function diffTableHTML(data, metric, anchorId){
+  const active=STRATS.filter(s=>state.enabled.has(s.id));
+  let h='<table><thead><tr><th>Floor</th>';
+  for(const s of active) h+=`<th><span class="swatch" style="background:${s.color};display:inline-block;margin-right:5px"></span>${s.name}${s.id===anchorId?' ◉':''}</th>`;
+  h+='</tr></thead><tbody>';
+  const hl=midRepIndex(data.reps);
+  data.reps.forEach((pos,ri)=>{
+    const flabel = floorLabel(pos);
+    h+=`<tr class="${ri===hl?'hl':''}"><td>${flabel}</td>`;
+    const av = (data.byStrat[anchorId]?data.byStrat[anchorId].rows[ri][metric]:0);
+    active.forEach(s=>{
+      if(s.id===anchorId){ h+=`<td style="color:var(--muted)">—</td>`; return; }
+      const dv=data.byStrat[s.id].rows[ri][metric]-av;
+      const cls = dv<-0.5?'best':(dv>0.5?'worst':'');
+      const sign = dv>0.5?'+':(dv<-0.5?'−':'');
+      h+=`<td class="${cls}" title="${Math.round(dv)} s">${sign}${mmss(Math.abs(dv))}</td>`;
+    });
+    h+='</tr>';
+  });
+  return h+'</tbody></table>';
+}
+
+/* ---------------- Rendering: SVG helpers ---------------- */
+function niceMax(v){
+  if(v<=0) return 60;
+  const p=Math.pow(10,Math.floor(Math.log10(v)));
+  const n=v/p;
+  const m = [1,1.5,2,3,4,5,6,8,10].find(x=>n<=x+1e-9) || 10;
+  return m*p;
+}
+
+function barSVG(data, metric){
+  const active=STRATS.filter(s=>state.enabled.has(s.id));
+  const reps=data.reps;
+  const W=760,H=340,padL=60,padR=16,padT=16,padB=64;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  let maxV=0;
+  reps.forEach((p,ri)=>active.forEach(s=>maxV=Math.max(maxV,data.byStrat[s.id].rows[ri][metric])));
+  const ymax=niceMax(maxV);
+  const x0=padL, y0=padT+plotH;
+  const groupW=plotW/reps.length, barGap=6;
+  const barW=Math.max(4,(groupW-barGap*2)/active.length - 3);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  // shade the middle-floor slice as a visual anchor
+  const hl=midRepIndex(reps);
+  if(hl>=0) svg+=`<rect x="${(x0+groupW*hl).toFixed(1)}" y="${padT}" width="${groupW.toFixed(1)}" height="${plotH.toFixed(1)}" fill="var(--hl)"/>`;
+  // gridlines + y ticks
+  for(let g=0;g<=5;g++){
+    const yv=ymax*g/5, y=y0-plotH*g/5;
+    svg+=`<line x1="${x0}" y1="${y}" x2="${x0+plotW}" y2="${y}" stroke="var(--line)"/>`;
+    svg+=`<text x="${x0-8}" y="${y+4}" text-anchor="end" font-size="11" fill="var(--muted)">${mmss(yv)}</text>`;
+  }
+  // vertical separators between floor groups
+  for(let ri=1;ri<reps.length;ri++){
+    const gx=x0+groupW*ri;
+    svg+=`<line x1="${gx.toFixed(1)}" y1="${padT}" x2="${gx.toFixed(1)}" y2="${y0}" stroke="var(--line)"/>`;
+  }
+  reps.forEach((pos,ri)=>{
+    const gx=x0+groupW*ri+barGap;
+    active.forEach((s,ci)=>{
+      const v=data.byStrat[s.id].rows[ri][metric];
+      const bh=plotH*v/ymax;
+      const bx=gx+ci*(barW+3);
+      svg+=`<rect x="${bx.toFixed(1)}" y="${(y0-bh).toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${s.color}" rx="2"><title>${s.name}\n${floorLabel(pos)}: ${mmss(v)} (${Math.round(v)}s)</title></rect>`;
+    });
+    svg+=`<text x="${(gx+groupW/2-barGap).toFixed(1)}" y="${y0+18}" text-anchor="middle" font-size="11" fill="var(--ink)">${shortLabel(pos)}</text>`;
+  });
+  svg+=legend(active,W,H-22);
+  svg+='</svg>';
+  return svg;
+}
+
+function diffSVG(data, metric, anchorId){
+  const active=STRATS.filter(s=>state.enabled.has(s.id));
+  const others=active.filter(s=>s.id!==anchorId);
+  const reps=data.reps;
+  if(!anchorId || others.length===0){ return '<p class="cap">Enable at least two cycles to see differences.</p>'; }
+  const W=760,H=340,padL=60,padR=16,padT=20,padB=64;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  let mag=1;
+  reps.forEach((p,ri)=>others.forEach(s=>{
+    mag=Math.max(mag,Math.abs(data.byStrat[s.id].rows[ri][metric]-data.byStrat[anchorId].rows[ri][metric]));
+  }));
+  const ext=niceMax(mag);
+  const x0=padL, mid=padT+plotH/2;
+  const groupW=plotW/reps.length, barGap=6;
+  const barW=Math.max(4,(groupW-barGap*2)/others.length - 3);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  // shade the middle-floor slice as a visual anchor
+  const hl=midRepIndex(reps);
+  if(hl>=0) svg+=`<rect x="${(x0+groupW*hl).toFixed(1)}" y="${padT}" width="${groupW.toFixed(1)}" height="${plotH.toFixed(1)}" fill="var(--hl)"/>`;
+  for(let g=-2;g<=2;g++){
+    const yv=ext*g/2, y=mid-(plotH/2)*g/2;
+    svg+=`<line x1="${x0}" y1="${y}" x2="${x0+plotW}" y2="${y}" stroke="${g===0?'var(--muted)':'var(--line)'}"/>`;
+    svg+=`<text x="${x0-8}" y="${y+4}" text-anchor="end" font-size="11" fill="var(--muted)">${g===0?'0':(g>0?'+':'−')+mmss(Math.abs(yv)).replace(/^0:/,'')}</text>`;
+  }
+  svg+=`<text x="${(x0+4).toFixed(1)}" y="${(padT+11).toFixed(1)}" font-size="10" fill="var(--muted)">↑ worse</text>`;
+  svg+=`<text x="${(x0+4).toFixed(1)}" y="${(padT+plotH-4).toFixed(1)}" font-size="10" fill="var(--muted)">↓ better</text>`;
+  // vertical separators between floor groups
+  for(let ri=1;ri<reps.length;ri++){
+    const gx=x0+groupW*ri;
+    svg+=`<line x1="${gx.toFixed(1)}" y1="${padT}" x2="${gx.toFixed(1)}" y2="${padT+plotH}" stroke="var(--line)"/>`;
+  }
+  reps.forEach((pos,ri)=>{
+    const gx=x0+groupW*ri+barGap;
+    others.forEach((s,ci)=>{
+      const d=data.byStrat[s.id].rows[ri][metric]-data.byStrat[anchorId].rows[ri][metric];
+      const bh=(plotH/2)*Math.abs(d)/ext;
+      const bx=gx+ci*(barW+3);
+      const y=d>=0?mid-bh:mid;
+      svg+=`<rect x="${bx.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0.5,bh).toFixed(1)}" fill="${s.color}" rx="2"><title>${s.name} vs ${STRATS.find(z=>z.id===anchorId).name}\n${floorLabel(pos)}: ${d>0?'+':''}${mmss(Math.abs(d))} (${d>0?'+':''}${Math.round(d)}s)</title></rect>`;
+    });
+    svg+=`<text x="${(gx+groupW/2-barGap).toFixed(1)}" y="${padT+plotH+18}" text-anchor="middle" font-size="11" fill="var(--ink)">${shortLabel(pos)}</text>`;
+  });
+  svg+=legend(others,W,H-22);
+  svg+='</svg>';
+  return svg;
+}
+
+/* build one resident set: F→L tables, L→F tables, then F→L graphs, L→F graphs */
+function renderResidentSet(mode, bodyId){
+  const data=computeAll(mode);
+  const anchorId = state.enabled.has(state.anchor) ? state.anchor : (STRATS.find(s=>state.enabled.has(s.id))||{}).id;
+  const anchorName = (STRATS.find(s=>s.id===anchorId)||{}).name || '—';
+  let h='<h3>Tables</h3>';
+  h+='<div class="tablebox"><h4>Floor → Lobby — times</h4>'+tableHTML(data,'down')+'</div>';
+  h+=`<div class="tablebox"><h4>Floor → Lobby — difference vs ${anchorName}</h4>`+diffTableHTML(data,'down',anchorId)+'</div>';
+  h+='<div class="tablebox"><h4>Lobby → Floor — times</h4>'+tableHTML(data,'up')+'</div>';
+  h+=`<div class="tablebox"><h4>Lobby → Floor — difference vs ${anchorName}</h4>`+diffTableHTML(data,'up',anchorId)+'</div>';
+  const cbox=(title,svg,note)=>`<div class="chartbox"><h4>${title}</h4><div class="chart">${svg}</div>${note?`<p class="chartnote">${note}</p>`:''}</div>`;
+  const downDiffNote = mode==='burden' ? 'Descent is easy on foot for almost everyone, so the cycles barely differ here — this panel is near-flat by design.' : '';
+  const upTimesNote = mode==='burden' ? 'The decisive direction: with no viable climb, the upper floors gain the most from a fast ascent. Climbing difficulty rises as F<sup>1.3</sup> — perceived exertion, not just clock time (<a href="#refsSection">Notes &amp; references</a>).' : '';
+  h+='<h3 style="margin-top:16px">Graphs</h3>';
+  h+='<div class="chartgrid">'
+    + cbox('Floor → Lobby — times', barSVG(data,'down'), '')
+    + cbox(`Floor → Lobby — difference vs ${anchorName}`, diffSVG(data,'down',anchorId), downDiffNote)
+    + '</div>';
+  h+='<div class="chartgrid">'
+    + cbox('Lobby → Floor — times', barSVG(data,'up'), upTimesNote)
+    + cbox(`Lobby → Floor — difference vs ${anchorName}`, diffSVG(data,'up',anchorId), '')
+    + '</div>';
+  const note = mode==='burden'
+    ? `Each cell is the <b>effective time</b> = the lesser of (waiting for the elevator, taking the stairs); climb effort ∝ F<sup>${state.climbShape}</sup>, so a fast ascent helps the upper floors most (they have no stair alternative). Totals tables: green = lowest (best) per floor, red = highest. In the difference panels each bar is colored by its cycle and plotted <b>above the line if worse than ${anchorName} (◉), below if better</b>.`
+    : `Captive elevator times (no stairs) — for any floor, Floor→Lobby + Lobby→Floor = one full cycle. Totals tables: green = fastest per floor, red = slowest. In the difference panels each bar is colored by its cycle and plotted <b>above the line if slower than ${anchorName} (◉), below if faster</b>.`;
+  h+=`<p class="cap">${note}</p>`;
+  document.getElementById(bodyId).innerHTML=h;
+}
+
+/* ---------------- Overall (urgency-weighted) ---------------- */
+function formatUrgency(){
+  const r=state.urgency, rr=Number.isInteger(r)?r:r.toFixed(1);
+  return `up:down ${rr}:1`;
+}
+/* effective-burden data with a combined per-floor "overall" value = w_up·up + w_down·down */
+function computeOverall(){
+  const data=computeAll('burden');
+  const r=state.urgency, wu=r/(r+1), wd=1/(r+1);
+  for(const id in data.byStrat)
+    for(const row of data.byStrat[id].rows)
+      row.overall = wu*row.up + wd*row.down;
+  return data;
+}
+function scoreboardHTML(data){
+  const active=STRATS.filter(s=>state.enabled.has(s.id));
+  const scored=active.map(s=>{
+    const vals=data.reps.map((p,i)=>data.byStrat[s.id].rows[i].overall);
+    return {s, score: vals.reduce((a,b)=>a+b,0)/Math.max(1,vals.length)};
+  }).sort((a,b)=>a.score-b.score);
+  const max=Math.max(...scored.map(x=>x.score),1);
+  let h='<h3>Cycle scoreboard <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— mean overall time cost across the floor cases, best first</span></h3><div class="scoreboard">';
+  scored.forEach((x,i)=>{
+    const w=Math.max(2,Math.round(x.score/max*100));
+    h+=`<div class="scorerow"><span class="swatch" style="background:${x.s.color}"></span>`+
+       `<span class="sname">${x.s.name}${i===0?' <b style="color:var(--good)">★</b>':''}</span>`+
+       `<span class="sbarwrap"><span class="sbar" style="width:${w}%;background:${x.s.color}"></span></span>`+
+       `<span class="sval">${mmss(x.score)}</span></div>`;
+  });
+  return h+'</div>';
+}
+function renderOverallSet(bodyId){
+  const data=computeOverall();
+  const anchorId = state.enabled.has(state.anchor) ? state.anchor : (STRATS.find(s=>state.enabled.has(s.id))||{}).id;
+  const anchorName = (STRATS.find(s=>s.id===anchorId)||{}).name || '—';
+  let h=scoreboardHTML(data);
+  h+='<h3 style="margin-top:14px">Tables</h3>';
+  h+='<div class="tablebox"><h4>Overall time cost — by floor</h4>'+tableHTML(data,'overall')+'</div>';
+  h+=`<div class="tablebox"><h4>Overall — difference vs ${anchorName}</h4>`+diffTableHTML(data,'overall',anchorId)+'</div>';
+  h+='<h3 style="margin-top:16px">Graphs</h3>';
+  h+='<div class="chartgrid">'
+    +'<div class="chartbox"><h4>Overall time cost — by floor</h4><div class="chart">'+barSVG(data,'overall')+'</div></div>'
+    +`<div class="chartbox"><h4>Overall — difference vs ${anchorName}</h4><div class="chart">`+diffSVG(data,'overall',anchorId)+'</div></div>'
+    +'</div>';
+  h+=`<p class="cap">Overall = ascent-urgency blend (<b>${formatUrgency()}</b>) of the “with stairs” Lobby→Floor and Floor→Lobby effective times. Scoreboard ranks cycles by the mean across the floor cases (lower is better). Totals table: green = lowest (best) per floor, red = highest. In the difference panel each bar is colored by its cycle and plotted <b>above the line if worse than ${anchorName} (◉), below if better</b>.</p>`;
+  document.getElementById(bodyId).innerHTML=h;
+}
+
+function legend(items,W,y){
+  const maxW=W-50, lineH=15;
+  const rows=[[]]; let w=0;
+  for(const it of items){
+    const iw=22+it.name.length*6.3;
+    if(w+iw>maxW && rows[rows.length-1].length){ rows.push([]); w=0; }
+    rows[rows.length-1].push(it); w+=iw;
+  }
+  let s='';
+  rows.forEach((row,ri)=>{
+    let lx=50; const yy=y-(rows.length-1-ri)*lineH;
+    for(const it of row){
+      s+=`<rect x="${lx.toFixed(1)}" y="${yy-9}" width="11" height="11" rx="2" fill="${it.color}"/>`;
+      s+=`<text x="${(lx+16).toFixed(1)}" y="${yy}" font-size="11" fill="var(--ink)">${it.name}</text>`;
+      lx += 22 + it.name.length*6.3;
+    }
+  });
+  return s;
+}
+
+function renderTimeline(data){
+  const id=state.enabled.has(state.viz)?state.viz:STRATS.find(s=>state.enabled.has(s.id))?.id;
+  const host=document.getElementById('timeline');
+  const per=document.getElementById('cyclePeriod');
+  if(!id){ host.innerHTML=''; per.textContent=''; return; }
+  const C=data.byStrat[id].C;
+  const M=topPos();
+  per.textContent=`Period ${mmss(C.T)} • ${data.byStrat[id].stops} stops`;
+  const W=760,H=320,padL=60,padR=16,padT=14,padB=40;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const T=C.T;
+  const X=t=>padL+plotW*t/T;
+  const Y=p=>padT+plotH*(1-p/M);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  // y gridlines per floor (cap labels if many)
+  const step=Math.ceil((M+1)/12);
+  for(let p=0;p<=M;p++){
+    const y=Y(p);
+    svg+=`<line x1="${padL}" y1="${y}" x2="${padL+plotW}" y2="${y}" stroke="var(--line)"/>`;
+    if(p%step===0||p===M) svg+=`<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--muted)">${shortLabel(p)}</text>`;
+  }
+  // x ticks + vertical gridlines
+  for(let g=0;g<=6;g++){
+    const t=T*g/6;
+    svg+=`<line x1="${X(t).toFixed(1)}" y1="${padT}" x2="${X(t).toFixed(1)}" y2="${padT+plotH}" stroke="var(--line)"/>`;
+    svg+=`<text x="${X(t)}" y="${H-padB+18}" text-anchor="middle" font-size="10" fill="var(--muted)">${mmss(t)}</text>`;
+  }
+  // path: open segments (flat) + travel diagonals
+  const ev=C.ev;
+  let d=`M ${X(0).toFixed(1)} ${Y(ev[0].pos).toFixed(1)}`;
+  for(let i=0;i<ev.length;i++){
+    const e=ev[i];
+    d+=` L ${X(e.tOpen).toFixed(1)} ${Y(e.pos).toFixed(1)} L ${X(e.tClose).toFixed(1)} ${Y(e.pos).toFixed(1)}`;
+  }
+  d+=` L ${X(T).toFixed(1)} ${Y(ev[0].pos).toFixed(1)}`;
+  const col=STRATS.find(s=>s.id===id).color;
+  svg+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+  // dots at stops
+  for(const e of ev){
+    svg+=`<rect x="${X(e.tOpen).toFixed(1)}" y="${(Y(e.pos)-2).toFixed(1)}" width="${Math.max(2,(X(e.tClose)-X(e.tOpen))).toFixed(1)}" height="4" fill="${col}"><title>${floorLabel(e.pos)} doors open ${mmss(e.tClose-e.tOpen)}</title></rect>`;
+  }
+  svg+='</svg>';
+  host.innerHTML=svg;
+}
+
+/* ---------------- dynamic headings & notes ---------------- */
+function climbFormula(){
+  return state.climbModel==='exp'
+    ? `${state.climbC}s·e^(${state.climbShape}·(F−1))`
+    : `${state.climbC}s·F^${state.climbShape}`;
+}
+function renderHeadings(){
+  document.getElementById('ambHeading').innerHTML =
+    `With stairs <span style="font-weight:400;color:var(--muted);font-size:13px">— effective time: the lesser of waiting or climbing (${climbFormula()}) <a href="#refsSection" style="font-size:11px">[basis ↓]</a></span>`;
+  document.getElementById('overallHeading').innerHTML =
+    `Overall <span style="font-weight:400;color:var(--muted);font-size:13px">— urgency-weighted blend of both directions (${formatUrgency()})</span>`;
+  const M=topPos();
+  document.getElementById('expressNote').textContent = mmss(moveTime(M))+` over ${M} floors`;
+  const cn=document.getElementById('climbNote');
+  if(cn) cn.textContent = `${mmss(climbEffort(M))} effort for ${M} flights`;
+  const reps=repPositions();
+  const hl=midRepIndex(reps);
+  document.getElementById('midNote').textContent = hl>=0 ? shortLabel(reps[hl]) : '—';
+}
+
+/* ---------------- Print summary ---------------- */
+function renderSummary(){
+  const M=topPos();
+  const f1 = state.floor1==='lobby'
+    ? `Floor 1 = Lobby (top = Fl ${state.floors})`
+    : `Floor 1 above Lobby (top = Fl ${state.floors})`;
+  const anchorName=(STRATS.find(s=>s.id===state.anchor)||{}).name||'—';
+  const items=[
+    ['Floors', state.floors],
+    ['Layout', f1],
+    ['Dwell / floor', state.midDwell+'s'],
+    ['Dwell / lobby', state.lobbyDwell+'s'],
+    ['Dwell / top', state.topDwell+'s'],
+    ['Travel', `${state.localStep}s hop + ${state.expressStep}s/added floor`],
+    ['Stair effort', `up ${climbFormula()}, down ${state.descentC}s/flight`],
+    ['Ascent urgency', `${formatUrgency()}`],
+    ['Diff anchor', anchorName],
+  ];
+  document.getElementById('printSummary').innerHTML =
+    items.map(([k,v])=>`<span class="kv"><b>${k}:</b> ${v}</span>`).join('');
+}
+
+/* ---------------- Master render ---------------- */
+let _t=null;
+function render(){
+  clearTimeout(_t);
+  _t=setTimeout(()=>{
+    ensureAnchor();
+    renderResidentSet('elevator','nonBody');   // no stairs / captive (top)
+    renderResidentSet('burden','ambBody');     // with stairs — effective burden
+    renderOverallSet('overallBody');           // urgency-weighted summary
+    renderTimeline(computeAll('elevator'));    // cycle schedule is the same for both
+    renderHeadings();
+    renderSummary();
+  },10);
+}
+
+/* ---------------- UI wiring ---------------- */
+function buildStratList(){
+  const host=document.getElementById('stratList');
+  host.innerHTML='';
+  for(const s of STRATS){
+    const en=state.enabled.has(s.id);
+    const item=document.createElement('div');
+    item.className='legitem'+(en?'':' off')+(state.anchor===s.id?' isanchor':'');
+    item.innerHTML=
+      `<input type="checkbox" class="en" ${en?'checked':''} title="Show this cycle">`+
+      `<span class="swatch" style="background:${s.color}"></span>`+
+      `<span class="lname">${s.name}</span>`+
+      `<label class="anchorpick" title="Use as the difference anchor">`+
+      `<input type="radio" name="anchorRadio" class="an" ${state.anchor===s.id?'checked':''} ${en?'':'disabled'}> anchor</label>`;
+    item.querySelector('.en').addEventListener('change',e=>{
+      if(e.target.checked) state.enabled.add(s.id); else state.enabled.delete(s.id);
+      ensureAnchor(); refreshSelectors(); buildStratList(); render();
+    });
+    item.querySelector('.an').addEventListener('change',e=>{
+      if(e.target.checked){ state.anchor=s.id; buildStratList(); render(); }
+    });
+    host.appendChild(item);
+  }
+}
+function ensureAnchor(){
+  if(!state.enabled.has(state.anchor)){
+    const first=STRATS.find(s=>state.enabled.has(s.id));
+    if(first) state.anchor=first.id;
+  }
+}
+function refreshSelectors(){
+  const active=STRATS.filter(s=>state.enabled.has(s.id));
+  const sel=document.getElementById('vizStrat');
+  const cur=sel.value; sel.innerHTML='';
+  for(const s of active){ const o=document.createElement('option'); o.value=s.id; o.textContent=s.name; sel.appendChild(o); }
+  if(active.find(s=>s.id===cur)) sel.value=cur; else if(active[0]) sel.value=active[0].id;
+  state.viz=sel.value;
+  ensureAnchor();
+}
+
+function bindNum(id,key){ const el=document.getElementById(id);
+  el.addEventListener('input',()=>{ const v=parseFloat(el.value); if(!isNaN(v)){state[key]=v; render();} }); }
+
+function bindSeg(id,fn){
+  const seg=document.getElementById(id);
+  seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v); render();
+  }));
+}
+
+function init(){
+  bindNum('floors','floors'); bindNum('midDwell','midDwell'); bindNum('lobbyDwell','lobbyDwell');
+  bindNum('topDwell','topDwell'); bindNum('localStep','localStep'); bindNum('expressStep','expressStep');
+  bindNum('climbC','climbC'); bindNum('climbShape','climbShape'); bindNum('descentC','descentC');
+  bindSeg('floor1mode',v=>state.floor1=v);
+  bindSeg('climbModel',v=>{
+    state.climbModel=v;
+    state.climbShape = (v==='exp') ? 0.25 : 1.3;
+    document.getElementById('climbShape').value = state.climbShape;
+    document.getElementById('climbShapeLabel').textContent = (v==='exp') ? 'Growth per flight' : 'Difficulty exponent';
+  });
+  const urg=document.getElementById('urgency');
+  urg.addEventListener('input',()=>{
+    state.urgency=parseFloat(urg.value)||1;
+    document.getElementById('urgencyOut').textContent=`${state.urgency}:1`;
+    render();
+  });
+  document.getElementById('vizStrat').addEventListener('change',e=>{state.viz=e.target.value;render();});
+  document.getElementById('printBtn').addEventListener('click',()=>window.print());
+  buildStratList();
+  refreshSelectors();
+  render();
+}
+init();
+</script>
+</body>
+</html>

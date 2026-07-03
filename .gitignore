@@ -1,0 +1,7 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
+
+# Local Claude settings (keep launch.json shared; ignore machine-local overrides)
+.claude/settings.local.json
