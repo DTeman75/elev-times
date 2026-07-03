@@ -1,5 +1,10 @@
 # Deploying to IONOS (under dteman.com)
 
+> **Currently live via GitHub Pages** → **https://dteman75.github.io/elev-times/**
+> (repo `github.com/DTeman75/elev-times`, served from `main` root). To update: edit
+> `index.html`, then `git commit` && `git push` — Pages rebuilds automatically.
+> The IONOS/Plesk routes below are kept as alternatives / for moving to a `dteman.com` URL.
+
 The whole tool is **one self-contained file** — `index.html` (≈51 KB, no build, no backend, no
 external dependencies). Hosting = "put this file somewhere a web server serves it." Pick one
 of the options below. Keep the filename `index.html` so the folder URL serves it directly.

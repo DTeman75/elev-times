@@ -93,15 +93,18 @@ Also: A4-landscape print/PDF (button top-right) with page breaks per section; re
 - Possibly de-emphasize/collapse the near-flat descent difference panels.
 
 ## Hosting
-- Target: **IONOS / Plesk**, as a path under **dteman.com** → **`https://dteman.com/elevator/`**.
-- Confirmed setup: dteman.com is Plesk-managed; its document root is **`httpdocs`** (holds the
-  live `index.html` and path-folders like `releaseari`, `shul-dev`). Deploy = in Plesk File
-  Manager, create a folder **`elevator`** inside `httpdocs` and upload **`index.html`** into it
-  (that one file is the whole app). Full walkthrough + subdomain alternative in `DEPLOY.md`.
-- One self-contained `index.html` (~51 KB, no external deps); `<title>`, description, OG/Twitter
-  meta, and an SVG favicon are set. HTTPS comes from dteman.com's existing certificate.
-- I cannot deploy to the user's account (no creds; outward-facing) — `DEPLOY.md` is their hand-off.
-- **Status: not yet uploaded** as of last session (user was about to do it via Plesk).
+- **LIVE (2026-07-03) via GitHub Pages** → **`https://dteman75.github.io/elev-times/`**.
+  Repo: **`github.com/DTeman75/elev-times`** (public), Pages served from `main` branch root,
+  HTTPS enforced. **Update flow:** edit `index.html` → `git commit` → `git push`; Pages
+  rebuilds automatically in ~1 min. No manual re-upload.
+- Version control: local git repo on `main` (initial commit `179d8e2`), pushed to the origin
+  above. `.gitignore` excludes `.DS_Store`, editor cruft, and `.claude/settings.local.json`.
+- One self-contained `index.html` (~54 KB, no external deps); `<title>`, description, OG/Twitter
+  meta, and an SVG favicon are set. HTTPS comes from GitHub Pages.
+- **Custom domain (optional, not done):** to serve at `elevator.dteman.com`, CNAME that
+  subdomain to `dteman75.github.io` and set it as the Pages custom domain (2-min DNS change).
+- **Alternate target still documented in `DEPLOY.md`:** Plesk upload to `httpdocs/elevator`
+  for `dteman.com/elevator/` — superseded by GitHub Pages but kept as a fallback route.
 
 ## Bilingual (Hebrew + English) — PENDING / not started
 - User is interested ("possibly … Hebrew and English"). English-first for the initial host.
