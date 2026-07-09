@@ -320,17 +320,6 @@
 
 <script>
 "use strict";
-/* TEMP on-device error reporter — shows any JS error on screen (safe on old Safari) */
-window.onerror=function(m,s,l,c){
-  try{
-    var d=document.getElementById('__errbar');
-    if(!d){ d=document.createElement('div'); d.id='__errbar';
-      d.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;font:12px/1.4 monospace;padding:10px;white-space:pre-wrap;word-break:break-word';
-      document.body.appendChild(d); }
-    d.appendChild(document.createTextNode('JS error: '+m+'  [line '+l+':'+c+']\n'));
-  }catch(e){}
-  return false;
-};
 
 /* ---------------- Strategy catalogue ---------------- */
 const PALETTE = ['#2563eb','#ea580c','#7c3aed','#db2777','#0891b2','#ca8a04'];
