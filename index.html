@@ -723,7 +723,8 @@ function legend(items,W,y){
 }
 
 function renderTimeline(data){
-  const id=state.enabled.has(state.viz)?state.viz:STRATS.find(s=>state.enabled.has(s.id))?.id;
+  const _first=STRATS.find(s=>state.enabled.has(s.id));
+  const id=state.enabled.has(state.viz)?state.viz:(_first?_first.id:undefined);
   const host=document.getElementById('timeline');
   const per=document.getElementById('cyclePeriod');
   if(!id){ host.innerHTML=''; per.textContent=''; return; }
