@@ -529,6 +529,16 @@ function diffTableHTML(data, metric, anchorId){
 }
 
 /* ---------------- Rendering: SVG helpers ---------------- */
+/* Safari <12.1 (e.g. iOS 10) can't resolve var() inside SVG presentation
+   attributes, so fills fall back to black. Resolve them to real values first. */
+function resolveSVGVars(svg){
+  const cs=getComputedStyle(document.documentElement);
+  const cache={};
+  return svg.replace(/var\((--[a-z]+)\)/g,function(_,name){
+    if(!(name in cache)){ cache[name]=(cs.getPropertyValue(name)||'').trim()||'#000'; }
+    return cache[name];
+  });
+}
 function niceMax(v){
   if(v<=0) return 60;
   const p=Math.pow(10,Math.floor(Math.log10(v)));
@@ -575,7 +585,7 @@ function barSVG(data, metric){
   });
   svg+=legend(active,W,H-22);
   svg+='</svg>';
-  return svg;
+  return resolveSVGVars(svg);
 }
 
 function diffSVG(data, metric, anchorId){
@@ -622,7 +632,7 @@ function diffSVG(data, metric, anchorId){
   });
   svg+=legend(others,W,H-22);
   svg+='</svg>';
-  return svg;
+  return resolveSVGVars(svg);
 }
 
 /* build one resident set: F→L tables, L→F tables, then F→L graphs, L→F graphs */
@@ -765,7 +775,7 @@ function renderTimeline(data){
     svg+=`<rect x="${X(e.tOpen).toFixed(1)}" y="${(Y(e.pos)-2).toFixed(1)}" width="${Math.max(2,(X(e.tClose)-X(e.tOpen))).toFixed(1)}" height="4" fill="${col}"><title>${floorLabel(e.pos)} doors open ${mmss(e.tClose-e.tOpen)}</title></rect>`;
   }
   svg+='</svg>';
-  host.innerHTML=svg;
+  host.innerHTML=resolveSVGVars(svg);
 }
 
 /* ---------------- dynamic headings & notes ---------------- */
